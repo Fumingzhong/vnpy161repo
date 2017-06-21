@@ -93,14 +93,34 @@ class ZFMDualThrustStrategy(CtaTemplate):
         lowLimit = ioOpen - self.K2 * ioRange
         
         #未处理有旧仓需要平仓问题
-        if close >= upLimit:
-            vtOrderId = self.sell(upLimit, self.fixedSize)
-            self.orderList.append(vtOrderId)
-        
-        if close <= lowLimit:
-            vtOrderId = self.buy(lowLimit, self.fixedSize)
-            self.orderList.append(vtOrderId)
+        if self.pos == 0:
+            if close >= upLimit:
+                vtOrderId = self.short(upLimit, self.fixedSize)
+                self.orderList.append(vtOrderId)
             
+            if close <= lowLimit:
+                vtOrderId = self.buy(lowLimit, self.fixedSize)
+                self.orderList.append(vtOrderId)
+                
+        elif self.pos >0:
+            if close >= upLimit:
+                vtOrderId = self.sell(upLimit, self.fixedSize)
+                self.orderList.append(vtOrderId)
+                
+            if close <= lowLimit:
+                vtOrderId = self.buy(lowLimit, self.fixedSize)
+                self.orderList.append(vtOrderId)
+                
+        else:
+            if close >= upLimit:
+                vtOrderId = self.short(upLimit, self.fixedSize)
+                self.orderList.append(vtOrderId)
+                
+            if close <= lowLimit:
+                vtOrderId = self.cover(lowLimit, self.fixedSize)
+                self.orderList.append(vtOrderId)            
+            
+                
         #发出状态更新事件（具体如何更新有待测试）    
         self.putEvent()
         
