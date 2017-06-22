@@ -138,6 +138,10 @@ class ZFMDualThrustStrategy(CtaTemplate):
     
     def onOrder(self, order):
         pass
+    
+    def onStop(self):
+        self.writeCtaLog(u'%s策略停止' %self.name)
+        self.putEvent()
         
 if __name__ == '__main__':
     
