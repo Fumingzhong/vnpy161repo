@@ -16,4 +16,10 @@
         "className": "KkStrategy",
         "vtSymbol": "IH1706"
     }
+
+    {
+        "name": "zfm dual thrust",
+        "className": "ZFMDualThrustStrategy",
+        "vtSymbol": "IH1706"
+    }
 ]
