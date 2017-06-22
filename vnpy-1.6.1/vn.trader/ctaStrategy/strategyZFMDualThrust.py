@@ -11,6 +11,7 @@ class ZFMDualThrustStrategy(CtaTemplate):
     #交易引擎参数
     orderList = []
     barList = []
+    barMinute = EMPTY_INT
     
     #策略参数
     K1 = EMPTY_FLOAT
@@ -67,6 +68,33 @@ class ZFMDualThrustStrategy(CtaTemplate):
     def onStart(self):
         self.writeCtaLog(u'%s策略启动' %self.name)
         self.putEvent()
+        
+    def onTick(self, tick):
+        "tick行情处理"
+        tickMinute = tick.datetime.minute
+        if tickMinute != self.barMinute:
+            self.onBar(bar)
+            bar = CtaBarData()
+            
+            bar.vtSymbol = tick.vtSymbol
+            bar.symbol = tick.symbol
+            bar.exchange = tick.exchange
+            
+            bar.open = tick.lastprice
+            bar.high = tick.lastprice
+            bar.low = tick.lastprice
+            bar.close = tick.lastprice
+            
+            bar.date = tick.date
+            bar.time = tick.time
+            bar.datetime = tick.datetime
+            
+            
+        else:
+            bar.high = max(bar.high, tick.lastprice)
+            bar.low = min(bar.low, tick.lastprice)
+            bar.close = tick.lastprice
+            
         
         
     def onBar(self, bar):
