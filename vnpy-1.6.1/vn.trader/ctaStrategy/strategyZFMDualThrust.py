@@ -27,10 +27,17 @@ class ZFMDualThrustStrategy(CtaTemplate):
     days = 1
     
     #需要首先输入参数汇总
-    paramList = ['K1',
+    paramList = ['name',
+                 'className',
+                 'author',
+                 'vtSymbol',
+                 'K1',
                  'K2',
                  'fixedSize',
                  'days']
+    
+    varList = ['ioRange',
+               'ioOpen']
 
     #----------------------------------------------------------------------
     def __init__(self, ctaEngine, setting):
@@ -46,7 +53,7 @@ class ZFMDualThrustStrategy(CtaTemplate):
         
     def onInit(self):
         #策略初始化
-        self.writeCtaLog(u'%s策略初始化成功' %self.name)
+        self.writeCtaLog(u'%s策略初始化' %self.name)
         initData = self.loadBar(self.days)
         #barList初始为空，在达到长度2之前，只会append barList
         for bar in initData:
@@ -58,7 +65,7 @@ class ZFMDualThrustStrategy(CtaTemplate):
         
     #个人感觉意义不大    
     def onStart(self):
-        self.writeCtaLog(u'%s策略启动成功' %self.name)
+        self.writeCtaLog(u'%s策略启动' %self.name)
         self.putEvent()
         
         
