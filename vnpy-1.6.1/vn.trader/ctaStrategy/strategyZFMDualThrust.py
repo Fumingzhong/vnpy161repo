@@ -11,6 +11,7 @@ class ZFMDualThrustStrategy(CtaTemplate):
     #交易引擎参数
     orderList = []
     barList = []
+    bar = None
     barMinute = EMPTY_INT
     
     #策略参数
@@ -20,6 +21,8 @@ class ZFMDualThrustStrategy(CtaTemplate):
     #出入场参数
     ioRange = EMPTY_FLOAT
     ioOpen = EMPTY_FLOAT
+    upLimit = EMPTY_FLOAT
+    lowLimit = EMPTY_FLOAT
     
     #下单参数
     fixedSize = 1
@@ -37,8 +40,13 @@ class ZFMDualThrustStrategy(CtaTemplate):
                  'fixedSize',
                  'days']
     
-    varList = ['ioRange',
-               'ioOpen']
+    varList = ['inited',
+               'trading',
+               'pos',
+               'ioRange',
+               'ioOpen',
+               'upLimit',
+               'lowLimit']
 
     #----------------------------------------------------------------------
     def __init__(self, ctaEngine, setting):
@@ -73,27 +81,40 @@ class ZFMDualThrustStrategy(CtaTemplate):
         "tick行情处理"
         tickMinute = tick.datetime.minute
         if tickMinute != self.barMinute:
-            self.onBar(bar)
+            
+            if self.bar:
+                self.onBar(self.bar)
+                
             bar = CtaBarData()
             
             bar.vtSymbol = tick.vtSymbol
             bar.symbol = tick.symbol
             bar.exchange = tick.exchange
             
-            bar.open = tick.lastprice
-            bar.high = tick.lastprice
-            bar.low = tick.lastprice
-            bar.close = tick.lastprice
+            bar.open = tick.lastPrice
+            bar.high = tick.lastPrice
+            bar.low = tick.lastPrice
+            bar.close = tick.lastPrice
             
             bar.date = tick.date
             bar.time = tick.time
             bar.datetime = tick.datetime
             
+            self.barMinute = tickMinute
+            
+            self.bar = bar
+            
+            
+            
+            
             
         else:
-            bar.high = max(bar.high, tick.lastprice)
-            bar.low = min(bar.low, tick.lastprice)
-            bar.close = tick.lastprice
+
+            bar = self.bar
+            
+            bar.high = max(bar.high, tick.lastPrice)
+            bar.low = min(bar.low, tick.lastPrice)
+            bar.close = tick.lastPrice
             
         
         
@@ -121,38 +142,38 @@ class ZFMDualThrustStrategy(CtaTemplate):
         low = bar.low
         close = bar.close
         
-        ioRange = max(lastHigh - lastClose, lastClose - lastLow)
-        ioOpen = open 
+        self.ioRange = max(lastHigh - lastClose, lastClose - lastLow)
+        self.ioOpen = open 
         
-        upLimit = ioOpen + self.K1 * ioRange
-        lowLimit = ioOpen - self.K2 * ioRange
+        self.self.upLimit = self.ioOpen + self.K1 * self.ioRange
+        self.self.lowLimit = self.ioOpen - self.K2 * self.ioRange
         
         #未处理有旧仓需要平仓问题
         if self.pos == 0:
-            if close >= upLimit:
-                vtOrderId = self.short(upLimit, self.fixedSize)
+            if close >= self.self.upLimit:
+                vtOrderId = self.short(self.upLimit, self.fixedSize)
                 self.orderList.append(vtOrderId)
             
-            if close <= lowLimit:
-                vtOrderId = self.buy(lowLimit, self.fixedSize)
+            if close <= self.self.lowLimit:
+                vtOrderId = self.buy(self.lowLimit, self.fixedSize)
                 self.orderList.append(vtOrderId)
                 
         elif self.pos >0:
-            if close >= upLimit:
-                vtOrderId = self.sell(upLimit, self.fixedSize)
+            if close >= self.self.upLimit:
+                vtOrderId = self.sell(self.upLimit, self.fixedSize)
                 self.orderList.append(vtOrderId)
                 
-            if close <= lowLimit:
-                vtOrderId = self.buy(lowLimit, self.fixedSize)
+            if close <= self.self.lowLimit:
+                vtOrderId = self.buy(self.lowLimit, self.fixedSize)
                 self.orderList.append(vtOrderId)
                 
         else:
-            if close >= upLimit:
-                vtOrderId = self.short(upLimit, self.fixedSize)
+            if close >= self.self.upLimit:
+                vtOrderId = self.short(self.upLimit, self.fixedSize)
                 self.orderList.append(vtOrderId)
                 
-            if close <= lowLimit:
-                vtOrderId = self.cover(lowLimit, self.fixedSize)
+            if close <= self.lowLimit:
+                vtOrderId = self.cover(self.lowLimit, self.fixedSize)
                 self.orderList.append(vtOrderId)            
             
                 
