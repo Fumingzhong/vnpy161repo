@@ -1,6 +1,7 @@
 # encoding: UTF-8
 from ctaTemplate import CtaTemplate
 from ctaBase import *
+from datetime import datetime
 
 ########################################################################
 class ZFMDualThrustStrategy(CtaTemplate):
@@ -19,6 +20,22 @@ class ZFMDualThrustStrategy(CtaTemplate):
     K2 = EMPTY_FLOAT
     
     #出入场参数
+    dayH = EMPTY_FLOAT
+    dayL = EMPTY_FLOAT
+    dayC = EMPTY_FLOAT
+    
+    nextDayFlag = False
+    
+    dayHBuffer = []
+    dayLBuffer = []
+    dayCBuffer = []
+    
+    
+    nDayHH = EMPTY_FLOAT
+    nDayLL = EMPTY_FLOAT
+    nDayCH = EMPTY_FLOAT
+    nDayCL = EMPTY_FLOAT
+    
     ioRange = EMPTY_FLOAT
     ioOpen = EMPTY_FLOAT
     upLimit = EMPTY_FLOAT
@@ -129,12 +146,41 @@ class ZFMDualThrustStrategy(CtaTemplate):
             return
         else:
             self.barList.pop(0)
-        #用于计算dualThrust上下轨的range
-        lastBar = self.barList[-2]    
-        lastOpen = lastBar.open
-        lastHigh = lastBar.high
-        lastLow = lastBar.low
-        lastClose = lastBar.close
+            
+        if bar.datetime.hour == 9 and bar.datetime.minute == 0:
+            self.dayH = bar.high
+            self.dayL = bar.low
+            self.dayC = bar.close
+            
+            
+        else:
+            self.dayH = max(bar.high, self.dayH)
+            self.dayL = min(bar.low, self.dayL)
+            self.dayC = max(bar.close, self.dayC)
+            
+        if bar.datetime.hour == 14 and bar.datetime.minute == 59 and bar.datetime.second == 59:
+            self.nextDayFlag = True
+            
+        if self.nextDayFlag:
+            self.dayHBuffer.append(self.dayH)
+            self.dayLBuffer.append(self.dayL)
+            self.dayCBuffer.append(self.dayC)
+            
+        if len(self.dayHBuffer) < self.days:
+            return
+        else:
+            if len(self.dayHBuffer) > self.days:
+                
+                self.dayHBuffer.pop(0)
+                self.dayLBuffer.pop(0)
+                self.dayCBuffer.pop(0)
+                
+            self.nDayHH = max(self.dayHBuffer)
+            self.nDayLL = min(self.dayLBuffer)
+            self.nDayCH = max(self.dayCBuffer)
+            self.nDayCL = min(self.dayCBuffer)
+                
+
         
         #用于计算上下轨的值
         open = bar.open
@@ -142,33 +188,33 @@ class ZFMDualThrustStrategy(CtaTemplate):
         low = bar.low
         close = bar.close
         
-        self.ioRange = max(lastHigh - lastClose, lastClose - lastLow)
+        self.ioRange = max(self.nDayHH - self.nDayCH, self.nDayCL - self.nDayLL)
         self.ioOpen = open 
         
-        self.self.upLimit = self.ioOpen + self.K1 * self.ioRange
-        self.self.lowLimit = self.ioOpen - self.K2 * self.ioRange
+        self.upLimit = self.ioOpen + self.K1 * self.ioRange
+        self.lowLimit = self.ioOpen - self.K2 * self.ioRange
         
         #未处理有旧仓需要平仓问题
         if self.pos == 0:
-            if close >= self.self.upLimit:
+            if close >= self.upLimit:
                 vtOrderId = self.short(self.upLimit, self.fixedSize)
                 self.orderList.append(vtOrderId)
             
-            if close <= self.self.lowLimit:
+            if close <= self.lowLimit:
                 vtOrderId = self.buy(self.lowLimit, self.fixedSize)
                 self.orderList.append(vtOrderId)
                 
         elif self.pos >0:
-            if close >= self.self.upLimit:
+            if close >= self.upLimit:
                 vtOrderId = self.sell(self.upLimit, self.fixedSize)
                 self.orderList.append(vtOrderId)
                 
-            if close <= self.self.lowLimit:
+            if close <= self.lowLimit:
                 vtOrderId = self.buy(self.lowLimit, self.fixedSize)
                 self.orderList.append(vtOrderId)
                 
         else:
-            if close >= self.self.upLimit:
+            if close >= self.upLimit:
                 vtOrderId = self.short(self.upLimit, self.fixedSize)
                 self.orderList.append(vtOrderId)
                 
